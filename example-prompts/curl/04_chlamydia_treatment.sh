@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+BASE_URL="${BASE_URL:-http://localhost:8000}"
+curl -sS -X POST "$BASE_URL/query" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the recommended treatment for chlamydial infection in adults and adolescents?"}' | python3 -m json.tool 2>/dev/null || curl -sS -X POST "$BASE_URL/query" -H "Content-Type: application/json" -d '{"question": "What is the recommended treatment for chlamydial infection in adults and adolescents?"}'

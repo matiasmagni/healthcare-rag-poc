@@ -1,0 +1,198 @@
+{
+  "info": {
+    "name": "Healthcare RAG PoC",
+    "description": "Postman collection for testing the HIPAA-aware local RAG API.\n\nEndpoints:\n- GET /health\n- POST /query (documented)\n- POST /endpoint (hidden alias)\n\nSet environment variable: base_url = http://localhost:8000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "HIPAA Clinician",
+      "item": [
+        {
+          "name": "Patient right of access",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What does HIPAA say about a patient's right to access their medical records?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Accounting of disclosures",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"When must a covered entity provide an accounting of disclosures of protected health information?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Clinician disclosure rules",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What are the clinician rules for disclosing protected health information?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Privacy Summary",
+      "item": [
+        {
+          "name": "Patient rights under Privacy Notice",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What rights do patients have under the HIPAA Privacy Notice?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Uses and disclosures",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"How does the Privacy Notice describe uses and disclosures of protected health information?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pocket Guide (STI)",
+      "item": [
+        {
+          "name": "Chlamydia treatment adults/adolescents",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What is the recommended treatment for chlamydial infection in adults and adolescents?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Gonorrhea treatment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What is the recommended regimen for gonococcal infection?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Bacterial vaginosis treatment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What are the recommended treatments for bacterial vaginosis?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Guardrails",
+      "item": [
+        {
+          "name": "Out of context - capital of France (refuse)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What is the capital of France?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Clinical advice request (guardrails)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"I have symptoms of chlamydia. What should I do and what dose should I take?\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Validation & Alias",
+      "item": [
+        {
+          "name": "Blank whitespace -> 400",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"   \"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "Empty string -> 422",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"\"\n}"},
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "GET /query -> 405",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/query", "host": ["{{base_url}}"], "path": ["query"]}
+          },
+          "response": []
+        },
+        {
+          "name": "POST /endpoint alias",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"question\": \"What is HIPAA?\"\n}"},
+            "url": {"raw": "{{base_url}}/endpoint", "host": ["{{base_url}}"], "path": ["endpoint"]}
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
