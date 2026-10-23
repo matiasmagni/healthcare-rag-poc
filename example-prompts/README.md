@@ -1,6 +1,6 @@
 # Example Prompts for Healthcare RAG PoC
 
-This folder contains ready-to-use examples for testing the API with **Postman**, **curl**, or any HTTP client. The API enforces strict, context-only answering over the three indexed PDFs and returns the exact refusal string when information is not present.
+This folder contains ready-to-use examples for testing the API with **Postman** or **curl**. The API enforces strict, context-only answering over the three indexed PDFs and returns the exact refusal string when information is not present.
 
 ## Quick Start
 
@@ -12,15 +12,17 @@ This folder contains ready-to-use examples for testing the API with **Postman**,
 
 | File | Purpose |
 | --- | --- |
-| `01_health_check.json` | Health endpoint test (Postman request template) |
-| `02_hipaa_clinician_prompts.json` | Questions targeting `HIPAA-Clinician-inside.pdf` |
-| `03_privacy_summary_prompts.json` | Questions targeting `privacysummary.pdf` |
-| `04_pocket_guide_prompts.json` | Questions targeting `pocket-guide.pdf` (CDC STI treatment guidelines) |
-| `05_mixed_grounded_prompts.json` | Mixed questions that may draw from multiple documents |
-| `06_guardrail_out_of_context.json` | Out-of-context/general knowledge and clinical advice requests (expects refusal) |
-| `07_validation_error_cases.json` | API validation/method cases (`400`, `422`, `405`) |
-| `postman_collection.json` | Complete Postman collection (import directly) |
-| `curl_examples.sh` | Executable shell script with curl commands for all scenarios |
+| `postman_collection.json` | Complete Postman collection (import directly) with requests for health, grounded questions, guardrails, and validation |
+| `curl/01_health_check.sh` | `GET /health` |
+| `curl/02_hipaa_patient_access.sh` | Patient right of access question against `HIPAA-Clinician-inside.pdf` |
+| `curl/03_privacy_notice_patient_rights.sh` | Patient rights question against `privacysummary.pdf` |
+| `curl/04_chlamydia_treatment.sh` | CDC STI treatment question against `pocket-guide.pdf` |
+| `curl/05_accounting_of_disclosures.sh` | Accounting-of-disclosures question |
+| `curl/06_out_of_context_refuse.sh` | Negative test confirming the canonical refusal response |
+| `curl/07_endpoint_alias.sh` | `POST /endpoint` alias check |
+| `curl/08_validation_blank_400.sh` | Blank/whitespace question → `400` |
+| `curl/09_validation_empty_422.sh` | Empty question → `422` |
+| `curl/10_validation_get_405.sh` | Wrong method → `405` |
 
 ## Expected Behavior
 
@@ -35,17 +37,22 @@ This folder contains ready-to-use examples for testing the API with **Postman**,
 ### Postman
 
 1. Open Postman → Import → `example-prompts/postman_collection.json`
-2. Set environment variable `base_url` to `http://localhost:8000`
+2. Set environment variable `base_url` to `http://localhost:8000` (or use the collection variable)
 3. Run requests in the collection folders
 
 ### curl
 
 ```bash
-chmod +x example-prompts/curl_examples.sh
-./example-prompts/curl_examples.sh
+# Run an individual script
+bash example-prompts/curl/01_health_check.sh
 ```
 
-Or run individual commands from the script.
+Or run them directly if executable:
+
+```bash
+chmod +x example-prompts/curl/*.sh
+./example-prompts/curl/01_health_check.sh
+```
 
 ## Notes
 
