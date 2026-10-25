@@ -128,7 +128,7 @@ graph TD
 - **[uv](https://docs.astral.sh/uv/)**: For dependency management and execution
 - **Unsloth Studio**: Running locally with an OpenAI-compatible API
   - Default endpoint: `http://localhost:8888/v1`
-  - Expected model: `unsloth/gemma-4-12b-it-GGUF:UD-Q4_K_XL` (configurable)
+  - Expected model: `unsloth/gemma-3-4b-it-GGUF:BF16` (configurable)
 - **GPU/CPU**: `sentence-transformers/all-MiniLM-L6-v2` runs well on CPU; adjust `EMBEDDING_DEVICE` if needed
 - **Disk**: ~100-500MB for models, plus space for `faiss_index/`
 
@@ -171,7 +171,7 @@ You can also place them in the project root; the loader searches both locations.
 
 ### 5) Start the local LLM
 
-Start Unsloth Studio and load the target model (e.g., `unsloth/gemma-4-12b-it-GGUF:UD-Q4_K_XL`). Ensure it is listening on `http://localhost:8888/v1` and that reasoning is disabled or compatible (see [Troubleshooting](#troubleshooting)).
+Start Unsloth Studio and load the target model (e.g., `unsloth/gemma-3-4b-it-GGUF:BF16`). Ensure it is listening on `http://localhost:8888/v1` and that reasoning is disabled or compatible (see [Troubleshooting](#troubleshooting)).
 
 ### 6) Run the API server
 
@@ -200,7 +200,7 @@ Expected response:
   "status": "ok",
   "indexed_chunks": 292,
   "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-  "llm_model": "unsloth/gemma-4-12b-it-GGUF:UD-Q4_K_XL"
+  "llm_model": "unsloth/gemma-3-4b-it-GGUF:BF16"
 }
 ```
 
@@ -212,7 +212,7 @@ All settings are loaded via [pydantic-settings](https://docs.pydantic.dev/latest
 | --- | --- | --- |
 | `UNSLOTH_BASE_URL` | `http://localhost:8888/v1` | OpenAI-compatible base URL for Unsloth Studio. |
 | `UNSLOTH_API_KEY` | **required** | API key used by `ChatOpenAI`. |
-| `UNSLOTH_MODEL` | `unsloth/gemma-4-12b-it-GGUF:UD-Q4_K_XL` | Model identifier sent to the server. |
+| `UNSLOTH_MODEL` | `unsloth/gemma-3-4b-it-GGUF:BF16` | Model identifier sent to the server. |
 | `LLM_TEMPERATURE` | `0.0` | Generation temperature (0.0 recommended for strict, deterministic answers). |
 | `LLM_TIMEOUT` | `120` | Request timeout in seconds for LLM calls. |
 | `LLM_MAX_RETRIES` | `2` | Retry count for transient LLM failures. |
@@ -244,7 +244,7 @@ Returns runtime status and configuration details.
   "status": "ok",
   "indexed_chunks": 292,
   "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-  "llm_model": "unsloth/gemma-4-12b-it-GGUF:UD-Q4_K_XL"
+  "llm_model": "unsloth/gemma-3-4b-it-GGUF:BF16"
 }
 ```
 
@@ -427,7 +427,7 @@ Thresholds live in the `ragas_config` fixture in `tests/conftest.py`. The HTML r
 ### Prerequisites
 
 - Dependencies installed (`uv sync`), including the dev/test group (`pytest`, `ragas`, `datasets`, `pandas`, `jinja2`).
-- Unsloth Studio running with an OpenAI-compatible endpoint on `http://localhost:8888/v1` and the model loaded.
+- Unsloth Studio running with an OpenAI-compatible endpoint on `http://localhost:8888/v1` and the model loaded (`unsloth/gemma-3-4b-it-GGUF:BF16`).
 - Embedding model available (downloaded on first run): `sentence-transformers/all-MiniLM-L6-v2`.
 
 > **Note:** The evaluator endpoint, model, and API key are currently hardcoded in `tests/conftest.py` and `tests/test_ragas_evaluation.py`. Update them if your local setup differs.
