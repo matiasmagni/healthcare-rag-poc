@@ -1,6 +1,6 @@
-# Example Prompts for Healthcare RAG PoC
+# Manual Tests for Healthcare RAG PoC
 
-This folder contains ready-to-use examples for testing the API with **Postman** or **curl**. The API enforces strict, context-only answering over the three indexed PDFs and returns the exact refusal string when information is not present.
+This folder contains ready-to-use examples for manually testing the API with **Postman** or **curl**. The API enforces strict, context-only answering over the indexed PDFs and returns the canonical refusal when information is not present.
 
 ## Quick Start
 
@@ -26,7 +26,7 @@ This folder contains ready-to-use examples for testing the API with **Postman** 
 
 ## Expected Behavior
 
-- **Grounded answers**: `POST /query` returns `{"answer": "...", "context": [...]}` with 4 chunks, each having `content`, `source`, `page`.
+- **Grounded answers**: `POST /query` returns `{"answer": "...", "context": [...]}` with up to `RETRIEVAL_K` chunks, each having `content`, `source`, `page`.
 - **Citations**: Answers should include `[Source N]` when referencing retrieved excerpts.
 - **Refusal**: Out-of-context questions must return exactly:
   `I don't have sufficient information in the provided documents to answer this question.`
@@ -36,7 +36,7 @@ This folder contains ready-to-use examples for testing the API with **Postman** 
 
 ### Postman
 
-1. Open Postman → Import → `example-prompts/postman_collection.json`
+1. Open Postman → Import → `manual-tests/postman_collection.json`
 2. Set environment variable `base_url` to `http://localhost:8000` (or use the collection variable)
 3. Run requests in the collection folders
 
@@ -44,18 +44,18 @@ This folder contains ready-to-use examples for testing the API with **Postman** 
 
 ```bash
 # Run an individual script
-bash example-prompts/curl/01_health_check.sh
+bash manual-tests/curl/01_health_check.sh
 ```
 
 Or run them directly if executable:
 
 ```bash
-chmod +x example-prompts/curl/*.sh
-./example-prompts/curl/01_health_check.sh
+chmod +x manual-tests/curl/*.sh
+./manual-tests/curl/01_health_check.sh
 ```
 
 ## Notes
 
-- The `context` array is returned on every successful `200` response from `/query` (and `/endpoint`) to support traceability.
+- The `context` array is returned on every successful `200` response from `/query` (and `/endpoint`) to support traceability. It is empty when an individualized clinical-advice request is refused before retrieval.
 - Page numbers are 1-based when available in PDF metadata; some pages may be `null`.
 - If the Unsloth server is not loaded or is timing out, you'll get `502 Bad Gateway`. Ensure the model is ready and consider setting `LLM_ENABLE_THINKING=false` in `.env`.

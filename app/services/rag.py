@@ -10,6 +10,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from app.config import Settings
+from app.guardrails import CLINICAL_ADVICE_RESPONSE, is_individualized_clinical_request
 from app.prompts import NO_ANSWER_RESPONSE, build_chat_prompt
 from app.services.document_ingestion import DocumentChunker, PDFDocumentLoader
 from app.services.factories import create_chat_model, create_embeddings
@@ -71,6 +72,10 @@ class RAGService:
         Returns:
             RAGResult containing answer and context chunks.
         """
+        if is_individualized_clinical_request(question):
+            logger.info("Refusing individualized clinical advice request")
+            return RAGResult(answer=CLINICAL_ADVICE_RESPONSE, context=())
+
         q_lower = question.lower()
         retrieval_k = self._retrieval_k
         if any(
@@ -171,7 +176,7 @@ def build_rag_service(settings: Settings) -> RAGService:
         Initialized RAGService instance.
     """
     embeddings = create_embeddings(settings)
-    loader = PDFDocumentLoader(settings.pdf_search_dirs, settings.pdf_filenames)
+    loader = PDFDocumentLoader(settings.pdf_search_dirs)
     chunker = DocumentChunker(settings.chunk_size, settings.chunk_overlap)
     vector_store = FAISSVectorStore(embeddings, settings.index_path)
 

@@ -11,55 +11,54 @@ logger = logging.getLogger(__name__)
 
 
 class PDFDocumentLoader:
-    """Load PDF files from configured directories."""
+    """Load all PDF files found in configured directories."""
 
-    def __init__(self, search_dirs: Sequence[Path], filenames: Sequence[str]) -> None:
+    def __init__(self, search_dirs: Sequence[Path]) -> None:
         """Initialize the loader.
 
         Args:
             search_dirs: Directories to search for PDFs (in order).
-            filenames: PDF filenames to load.
         """
         self._search_dirs = tuple(search_dirs)
-        self._filenames = tuple(filenames)
 
     def load(self) -> list[Document]:
-        """Load all configured PDFs and return LangChain Documents.
+        """Load every PDF found in the search directories.
 
         Returns:
             List of loaded documents (one Document per page typically).
-        """
-        documents: list[Document] = []
-        for filename in self._filenames:
-            path = self._resolve_path(filename)
-            logger.info("Loading PDF: %s", path)
-            documents.extend(PyPDFLoader(str(path)).load())
-        
-        return documents
-
-    def _resolve_path(self, filename: str) -> Path:
-        """Resolve a filename to an existing file path in search directories.
-
-        Args:
-            filename: Name of the PDF file.
-
-        Returns:
-            Path to the found PDF.
 
         Raises:
-            FileNotFoundError: If the PDF cannot be found in any search directory.
+            FileNotFoundError: If no PDFs are found in any search directory.
         """
+        paths = self._discover_paths()
+        if not paths:
+            searched = ", ".join(str(directory) for directory in self._search_dirs)
+            raise FileNotFoundError(f"No PDF files found. Searched: {searched}")
+
+        documents: list[Document] = []
+        for path in paths:
+            logger.info("Loading PDF: %s", path)
+            documents.extend(PyPDFLoader(str(path)).load())
+
+        return documents
+
+    def _discover_paths(self) -> list[Path]:
+        """Collect all PDF files in the search directories, without duplicates.
+
+        Returns:
+            Sorted list of PDF paths.
+        """
+        paths: dict[Path, Path] = {}
+
         for directory in self._search_dirs:
-            candidate = directory / filename
+            if not directory.is_dir():
+                continue
 
-            if candidate.is_file():
-                return candidate
-            
-        searched = ", ".join(
-            str(directory / filename) for directory in self._search_dirs
-        )
+            for path in sorted(directory.glob("*.pdf")):
+                if path.is_file():
+                    paths.setdefault(path.resolve(), path)
 
-        raise FileNotFoundError(f"PDF not found: {filename}. Searched: {searched}")
+        return list(paths.values())
 
 
 class DocumentChunker:

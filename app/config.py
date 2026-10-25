@@ -22,12 +22,6 @@ class Settings(BaseSettings):
     base_dir: Path = PROJECT_ROOT
     index_dir_name: str = os.getenv("INDEX_DIR_NAME", "faiss_index")
     pdf_subdir: str = os.getenv("PDF_SUBDIR", "input-docs")
-    pdf_filenames: tuple[str, ...] = tuple(
-        [name.strip() for name in os.getenv(
-            "PDF_FILENAMES",
-            "HIPAA-Clinician-inside.pdf,privacysummary.pdf,pocket-guide.pdf",
-        ).split(",") if name.strip()]
-    )
 
     chunk_size: int = Field(default=int(os.getenv("CHUNK_SIZE", "500")), gt=0)
     chunk_overlap: int = Field(default=int(os.getenv("CHUNK_OVERLAP", "50")), ge=0)

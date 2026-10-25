@@ -18,7 +18,7 @@
 [![uv](https://img.shields.io/badge/uv-Package%20Manager-DE5FE9.svg?style=for-the-badge&logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes three clinical/administrative PDFs with `RecursiveCharacterTextSplitter`, embeds chunks with `sentence-transformers/all-MiniLM-L6-v2`, persists a FAISS index to disk, and answers questions through a strict, context-only system prompt served by [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/), backed by a local [Unsloth Studio](https://unsloth.ai/) OpenAI-compatible server. Includes automated quality evaluation via [Ragas](https://docs.ragas.io/).
+A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes every PDF found in `input-docs/` with `RecursiveCharacterTextSplitter`, embeds chunks with `sentence-transformers/all-MiniLM-L6-v2`, persists a FAISS index to disk, and answers questions through a strict, context-only system prompt served by [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/), backed by a local [Unsloth Studio](https://unsloth.ai/) OpenAI-compatible server. Includes automated quality evaluation via [Ragas](https://docs.ragas.io/).
 
 > **Note:** This is a proof-of-concept for local development/testing. It enforces a "use only retrieved context / no hallucinations" policy and returns the exact refusal string when the answer is not grounded in the indexed documents.
 
@@ -32,18 +32,19 @@ A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes t
 - [Configuration](#configuration)
 - [API Reference](#api-reference)
 - [Querying with Postman](#querying-with-postman)
-- [Testing with Example Prompts](#testing-with-example-prompts)
+- [Manual Testing](#manual-testing)
 - [Automated Evaluation Tests](#automated-evaluation-tests)
+- [Guardrail and Refusal Tests](#guardrail-and-refusal-tests)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 - [License / Disclaimer](#license--disclaimer)
 
 ## Features
 
-- **Deterministic ingestion**: Loads exactly the three PDFs from `input-docs/` (or project root), chunks with `chunk_size=500`, `chunk_overlap=50`, and keeps source/page metadata.
+- **Automatic ingestion**: Loads all PDFs found in `input-docs/` (or project root), chunks with `chunk_size=500`, `chunk_overlap=50`, and keeps source/page metadata.
 - **Fast, local retrieval**: Uses [FAISS](https://github.com/facebookresearch/faiss) (`faiss-cpu`) for similarity search and saves the index to `./faiss_index/` to avoid re-indexing on startup.
 - **Local-first LLM**: Connects to Unsloth Studio via `langchain-openai` using the OpenAI Chat Completions schema.
-- **HIPAA-aligned guardrails**: A strict system prompt forces answers to use only retrieved context, cite `[Source N]`, reject clinical advice, and return the canonical refusal when insufficient.
+- **HIPAA-aligned guardrails**: A strict system prompt forces answers to use only retrieved context and cite `[Source N]`. A deterministic pre-check rejects individualized clinical advice before retrieval, and insufficient context returns the canonical refusal.
 - **Automated evaluation with Ragas**: Built-in test suite and standalone HTML report evaluating faithfulness, answer relevance, context precision, and context recall against ground-truth benchmarks.
 - **Clean, modular design**: Follows SOLID/DRY/KISS principles with a package layout (`app/`) split by config, services, API, and schemas.
 - **First-class API UX**: `GET /health`, `POST /query` (documented), `POST /endpoint` (hidden alias). Pydantic v2 validation with sensible error codes.
@@ -74,8 +75,9 @@ graph TD
 ├── app/
 │   ├── __init__.py
 │   ├── config.py                 # Pydantic Settings (env parsing, validation)
+│   ├── guardrails.py             # Deterministic clinical-advice detection
 │   ├── main.py                   # FastAPI app factory + lifespan + logging
-│   ├── prompts.py                # SYSTEM_PROMPT, USER_PROMPT, NO_ANSWER_RESPONSE
+│   ├── prompts.py                # SYSTEM_PROMPT, USER_PROMPT, refusals
 │   ├── schemas.py                # QueryRequest/Response, ContextChunk, HealthResponse
 │   ├── api/
 │   │   ├── __init__.py
@@ -89,7 +91,7 @@ graph TD
 │       └── vector_store.py       # FAISS load/create/persist/search
 ├── docs/
 │   └── images/                   # Documentation assets (screenshots, diagrams)
-├── example-prompts/
+├── manual-tests/
 │   ├── README.md                 # Usage notes and expected behavior
 │   ├── postman_collection.json   # Ready-to-import Postman collection
 │   └── curl/                     # Numbered, executable curl scenarios
@@ -103,12 +105,14 @@ graph TD
 │       ├── 08_validation_blank_400.sh
 │       ├── 09_validation_empty_422.sh
 │       └── 10_validation_get_405.sh
-├── input-docs/                   # Source PDFs: HIPAA-Clinician-inside.pdf, privacysummary.pdf, pocket-guide.pdf
+├── input-docs/                   # Source PDFs (all PDFs in this folder are indexed)
 ├── tests/
 │   ├── conftest.py               # Shared pytest fixtures (LLM, evaluator, Ragas thresholds)
 │   ├── dataset.json              # Ground-truth Q&A/context cases used for evaluation
 │   ├── generate_html_report.py   # Standalone HTML report generator
+│   ├── test_guardrails.py        # Clinical-advice guardrail API tests
 │   ├── test_ragas_evaluation.py  # Ragas evaluation test
+│   ├── test_refusal.py           # Out-of-context refusal API tests
 │   └── reports/                  # Generated HTML report (gitignored)
 ├── faiss_index/                  # Generated FAISS index (gitignored; rebuilt on demand)
 │   ├── index.faiss
@@ -161,13 +165,9 @@ Edit `.env` (see [Configuration](#configuration)). At minimum, ensure `UNSLOTH_A
 
 ### 4) Ensure source documents are present
 
-The app expects the following PDFs in `input-docs/` (already included):
+The app indexes every PDF found in `input-docs/` (sample documents are already included). To add or replace documents, drop `.pdf` files into that folder and rebuild the index.
 
-- `HIPAA-Clinician-inside.pdf`
-- `privacysummary.pdf`
-- `pocket-guide.pdf`
-
-You can also place them in the project root; the loader searches both locations.
+You can also place PDFs in the project root; the loader searches both locations.
 
 ### 5) Start the local LLM
 
@@ -340,6 +340,28 @@ Hidden alias for `/query` (not shown in OpenAPI schema by default). Same contrac
 I don't have sufficient information in the provided documents to answer this question.
 ```
 
+### Query Example (Individualized Clinical Advice)
+
+Questions that ask for personal diagnosis, treatment, or dosing are rejected deterministically before retrieval or LLM generation.
+
+- **Method:** `POST`
+- **URL:** `{{base_url}}/query`
+- **Body (raw JSON):**
+
+```json
+{
+  "question": "I have symptoms of chlamydia. What should I do and what dose should I take?"
+}
+```
+
+**Expected behavior:** `200 OK`, `context` is empty, and `answer` exactly equals:
+
+```text
+I cannot provide individualized medical advice, diagnosis, or treatment recommendations. Please consult a qualified healthcare professional about your specific situation.
+```
+
+General educational questions (for example, "What is the recommended treatment for chlamydial infection in adults and adolescents?") are still answered from the documents.
+
 ### Validation Tests
 
 | Case | Body | Expected Status | Notes |
@@ -351,7 +373,7 @@ I don't have sufficient information in the provided documents to answer this que
 
 ### Postman Collection Import (Optional)
 
-You can create a collection with the above requests manually, or import a file. If you'd like, add a JSON export to this repo under `docs/postman/` and reference it here. The [`example-prompts/`](./example-prompts) folder contains ready-to-paste JSON bodies and curl commands.
+You can create a collection with the above requests manually, or import a file. If you'd like, add a JSON export to this repo under `docs/postman/` and reference it here. The [`manual-tests/`](./manual-tests) folder contains ready-to-paste JSON bodies and curl commands.
 
 ### cURL Equivalents
 
@@ -375,9 +397,9 @@ curl -X POST http://localhost:8000/endpoint \
   -d '{"question": "What is HIPAA?"}'
 ```
 
-## Testing with Example Prompts
+## Manual Testing
 
-The [`example-prompts/`](./example-prompts) folder contains curated questions grouped by source and intent to manually verify grounding, citations, and guardrails.
+The [`manual-tests/`](./manual-tests) folder contains curated questions grouped by source and intent to manually verify grounding, citations, and guardrails.
 
 ### Included files
 
@@ -399,15 +421,15 @@ The [`example-prompts/`](./example-prompts) folder contains curated questions gr
 To use them:
 
 1. Start the server as described in [Quick Start](#quick-start).
-2. Import `example-prompts/postman_collection.json` into Postman, or run the scripts in `example-prompts/curl/` individually (e.g. `bash example-prompts/curl/01_health_check.sh`).
+2. Import `manual-tests/postman_collection.json` into Postman, or run the scripts in `manual-tests/curl/` individually (e.g. `bash manual-tests/curl/01_health_check.sh`).
 3. Execute requests in order: health -> grounded questions -> guardrails -> validation.
 
 **Manual verification checklist:**
 - [ ] Answers only use retrieved context and include `[Source N]` when applicable
-- [ ] Every response includes exactly `answer` and `context` (4 chunks)
-- [ ] Context chunks have `content`, `source` (one of the three PDFs), and `page` (integer or `null`)
+- [ ] Every successful response includes exactly `answer` and `context`; grounded answers include retrieved chunks (up to `RETRIEVAL_K`)
+- [ ] Context chunks have `content`, `source` (one of the indexed PDFs), and `page` (integer or `null`)
 - [ ] Out-of-context questions return the exact refusal string
-- [ ] Clinical/diagnostic advice questions are handled per the guardrails (the system prompt discourages providing individualized advice)
+- [ ] Individualized clinical advice questions return the clinical-advice refusal with an empty `context`
 
 ## Automated Evaluation Tests
 
@@ -418,11 +440,11 @@ The `tests/` directory contains an automated [Ragas](https://docs.ragas.io/) eva
 | Metric | Description | Enforced threshold |
 | --- | --- | --- |
 | Faithfulness | Whether the answer is grounded in the retrieved contexts | `>= 0.85` |
-| Answer Relevance | Whether the answer actually addresses the question | `>= 0.85` |
-| Context Precision | Whether relevant chunks are ranked highly | Not enforced (`0.0`) |
-| Context Recall | Whether retrieval covers the reference answer | Not enforced (`0.0`) |
+| Answer Relevance | Whether the answer actually addresses the question | `>= 0.60` |
+| Context Precision | Whether relevant chunks are ranked highly | `>= 0.85` |
+| Context Recall | Whether retrieval covers the reference answer | `>= 0.85` |
 
-Thresholds live in the `ragas_config` fixture in `tests/conftest.py`. The HTML report uses `0.85` for all four metrics when rendering PASS/FAIL badges.
+Thresholds are configured through `RAGAS_*_THRESHOLD` environment variables (see `.env.example`) and loaded by the `ragas_config` fixture in `tests/conftest.py`. The HTML report uses the same values when rendering PASS/FAIL badges.
 
 ### Prerequisites
 
@@ -440,6 +462,12 @@ uv run pytest tests/ -v
 
 # Run only the Ragas evaluation
 uv run pytest tests/test_ragas_evaluation.py -v
+
+# Run only the guardrail API tests (the general-question case requires Unsloth)
+uv run pytest tests/test_guardrails.py -v
+
+# Run only the out-of-context refusal API tests (requires Unsloth)
+uv run pytest tests/test_refusal.py -v
 ```
 
 The test prints the average scores to the console and generates a standalone HTML report at:
@@ -452,9 +480,40 @@ Open it in any browser (Tailwind is loaded via CDN). The report includes summary
 
 ### Current behavior and caveats
 
-- The test asserts only **faithfulness** and **answer relevance**; context precision/recall are reported but not gated.
+- The Ragas test asserts only **faithfulness** and **answer relevance**; context precision/recall are reported but not gated.
 - Real evaluation is executed directly against the local LLM and evaluator without mock data or fake fallbacks. If evaluation fails (e.g. Unsloth is not running or unreachable), the test raises and fails.
-- The dataset contains reference answers and contexts; it does not exercise the FastAPI HTTP layer. Use the [example prompts](#testing-with-example-prompts) for end-to-end API checks.
+- The Ragas dataset contains reference answers and contexts; it does not exercise the FastAPI HTTP layer. The `tests/test_guardrails.py` and `tests/test_refusal.py` modules cover the HTTP contracts for guardrail and out-of-context refusals, and the [manual test suite](#manual-testing) covers manual end-to-end checks.
+
+## Guardrail and Refusal Tests
+
+Two additional test modules cover the safety and refusal behavior without Ragas scoring.
+
+### `tests/test_guardrails.py`
+
+End-to-end HTTP tests using FastAPI's `TestClient` against the real RAG pipeline:
+
+- Individualized requests include first-person symptoms, treatment/dosing questions, and questions about a partner or child (for example, "I have symptoms of chlamydia. What should I do and what dose should I take?"). Each must return `200` with `answer` exactly equal to `CLINICAL_ADVICE_RESPONSE` and an empty `context`, proving the guardrail short-circuits before retrieval.
+- The `/endpoint` alias must enforce the same guardrail contract.
+- A general educational question (for example, "What is the recommended treatment for chlamydial infection in adults and adolescents?") must not be intercepted by the guardrail and must reach retrieval.
+
+These tests build the FAISS index handle and embedding model at startup. The refusal cases do not call the LLM; the general-question case does and requires Unsloth Studio to be running.
+
+### `tests/test_refusal.py`
+
+HTTP-level integration tests using FastAPI's `TestClient` against the real RAG pipeline. Four unrelated questions assert that `/query` returns `200` with `answer` exactly equal to `NO_ANSWER_RESPONSE`:
+
+- "What is the capital of France?"
+- "Who won the 2024 FIFA World Cup?"
+- "What is the boiling point of water at sea level?"
+- "How do I bake sourdough bread?"
+
+The `/endpoint` alias is also checked for the same refusal contract. Retrieved `context` may still be non-empty because the index always returns nearest-neighbor chunks; only the answer is asserted. These tests require Unsloth Studio to be running, as the refusal is produced by the LLM using the strict system prompt.
+
+Run both modules together:
+
+```bash
+uv run pytest tests/test_guardrails.py tests/test_refusal.py -v
+```
 
 ## Development
 
