@@ -25,3 +25,7 @@ htmlcov/
 .DS_Store
 
 .bruin.yml
+# Test reports
+tests/reports/
+__pycache__/
+*.pyc

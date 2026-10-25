@@ -1,0 +1,38 @@
+[
+  {
+    "user_input": "What are the key HIPAA privacy rights for patients?",
+    "retrieved_contexts": [
+      "Patients have the right to request restrictions on certain uses and disclosures of their protected health information (PHI). Under HIPAA, individuals can also request confidential communications and access their PHI. Patients have the right to receive a Notice of Privacy Practices explaining how their health information may be used and disclosed.",
+      "The HIPAA Privacy Rule gives patients rights including the right to inspect and copy their medical records, request amendments, receive an accounting of disclosures, request restrictions on uses and disclosures, request confidential communications, and file a complaint if they believe their privacy rights were violated."
+    ],
+    "response": "Under HIPAA, patients have several key privacy rights: the right to access and inspect their medical records, the right to request amendments to their records, the right to receive an accounting of certain disclosures of their PHI, the right to request restrictions on uses and disclosures, the right to request confidential communications, the right to be notified of breaches, and the right to file a complaint if they believe their rights were violated.",
+    "reference": "Patients have rights including access to inspect and copy medical records, request amendments, receive an accounting of disclosures, request restrictions, request confidential communications, receive a Notice of Privacy Practices, and file complaints regarding privacy violations."
+  },
+  {
+    "user_input": "When is a covered entity permitted to disclose PHI without patient authorization?",
+    "retrieved_contexts": [
+      "A covered entity may disclose PHI without authorization for treatment, payment, and healthcare operations (TPO). Other permitted disclosures without authorization include disclosures required by law, public health activities, reporting of abuse/neglect/domestic violence, health oversight activities, judicial and administrative proceedings, law enforcement purposes under certain conditions, organ donation, research under strict conditions, serious threats to health or safety, and certain specialized government functions.",
+      "HIPAA permits disclosures without patient authorization when necessary for treatment purposes between providers, for payment activities, for healthcare operations, and in specific situations required or permitted by law such as public health reporting or emergency circumstances."
+    ],
+    "response": "Covered entities may disclose PHI without patient authorization for treatment, payment, and healthcare operations (TPO). Additional permitted disclosures include those required by law, public health activities, reports of abuse or neglect, health oversight activities, judicial proceedings, law enforcement under specific circumstances, serious threats to health and safety, organ and tissue donation, certain research activities with safeguards, and specialized government functions.",
+    "reference": "Disclosures without authorization are permitted for treatment, payment, and healthcare operations, as well as when required by law, for public health activities, reporting abuse/neglect, health oversight, judicial/admin proceedings, law enforcement purposes, to avert serious threats, for organ donation, and other specific permitted uses."
+  },
+  {
+    "user_input": "What safeguards are required by HIPAA to protect electronic PHI?",
+    "retrieved_contexts": [
+      "The HIPAA Security Rule requires covered entities to implement administrative, physical, and technical safeguards to ensure the confidentiality, integrity, and availability of electronic protected health information (ePHI). Administrative safeguards include risk analysis and risk management, workforce training, and access management. Physical safeguards include facility access controls and workstation security. Technical safeguards include access control, audit controls, integrity controls, and transmission security.",
+      "To protect ePHI, organizations must conduct risk assessments, implement access controls, use encryption where appropriate, maintain audit logs, establish contingency plans, train workforce members, apply physical safeguards to electronic systems, and regularly review security measures to address evolving threats."
+    ],
+    "response": "HIPAA requires three types of safeguards for ePHI: Administrative safeguards (risk analysis and management, workforce training, security policies, access authorization, and incident response), Physical safeguards (facility access controls, workstation use and security, device and media controls), and Technical safeguards (unique user identification, emergency access procedures, automatic logoff, encryption and decryption, audit controls, integrity controls, and transmission security).",
+    "reference": "Covered entities must implement administrative safeguards (risk analysis, policies, training), physical safeguards (facility and workstation security), and technical safeguards (access control, audit controls, integrity, transmission security) to protect ePHI."
+  },
+  {
+    "user_input": "What is the HIPAA breach notification requirement?",
+    "retrieved_contexts": [
+      "Under the HIPAA Breach Notification Rule, covered entities must notify affected individuals, the Secretary of HHS, and in some cases the media following a breach of unsecured PHI. Notification to individuals must be provided without unreasonable delay and no later than 60 calendar days after discovery of the breach. If a breach affects 500 or more residents of a state or jurisdiction, covered entities must notify the media and HHS immediately; for breaches affecting fewer than 500 individuals, they must be reported to HHS on an annual basis.",
+      "A breach is defined as an acquisition, access, use, or disclosure of PHI in a manner not permitted under the Privacy Rule that compromises the security or privacy of the PHI. Covered entities must conduct a risk assessment to determine if there is a low probability of compromise; if not, breach notification is required to individuals (within 60 days), to HHS (immediately if >=500, annually if <500), and to media if >=500 in a jurisdiction."
+    ],
+    "response": "Under the HIPAA Breach Notification Rule, covered entities must notify affected individuals without unreasonable delay and no later than 60 calendar days after discovering a breach of unsecured PHI. If the breach affects 500 or more individuals in a state or jurisdiction, the entity must also notify prominent media outlets and the Secretary of HHS. For breaches affecting fewer than 500 individuals, notification to HHS is required annually. Covered entities must also notify business associates of breaches at their level.",
+    "reference": "Following discovery of a breach of unsecured PHI, covered entities must notify affected individuals within 60 days, notify HHS (immediately if ≥500 affected in a jurisdiction, otherwise annually), and notify media if ≥500 affected in a jurisdiction."
+  }
+]

@@ -7,15 +7,18 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.162%2B-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Uvicorn](https://img.shields.io/badge/Uvicorn-0.54%2B-499848.svg?style=for-the-badge&logo=gunicorn&logoColor=white)](https://www.uvicorn.org/)
 [![LangChain](https://img.shields.io/badge/LangChain-1.4%2B-1C3C3C.svg?style=for-the-badge&logo=langchain&logoColor=white)](https://www.langchain.com/)
-[![LangChain OpenAI](https://img.shields.io/badge/LangChain%20OpenAI-1.7%2B-412991.svg?style=for-the-badge)](https://python.langchain.com/docs/integrations/llms/openai/)
+[![LangChain OpenAI](https://img.shields.io/badge/LangChain%20OpenAI-1.7%2B-412991.svg?style=for-the-badge&logo=openai&logoColor=white)](https://python.langchain.com/docs/integrations/llms/openai/)
 [![FAISS](https://img.shields.io/badge/FAISS-CPU-0467DF.svg?style=for-the-badge)](https://github.com/facebookresearch/faiss)
 [![HuggingFace](https://img.shields.io/badge/HuggingFace-Sentence%20Transformers-FFD21E.svg?style=for-the-badge&logo=huggingface&logoColor=black)](https://www.sbert.net/)
 [![pypdf](https://img.shields.io/badge/pypdf-6.21%2B-FF3621.svg?style=for-the-badge)](https://pypdf.readthedocs.io/)
 [![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063.svg?style=for-the-badge&logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
+[![Ragas](https://img.shields.io/badge/Ragas-0.4%2B-FF4B4B.svg?style=for-the-badge)](https://docs.ragas.io/)
+[![pytest](https://img.shields.io/badge/pytest-8.0%2B-0A9EDC.svg?style=for-the-badge&logo=pytest&logoColor=white)](https://docs.pytest.org/)
 [![Ruff](https://img.shields.io/badge/Ruff-Linted%20%26%20Formatted-D7FF64.svg?style=for-the-badge&logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![uv](https://img.shields.io/badge/uv-Package%20Manager-DE5FE9.svg?style=for-the-badge&logo=astral&logoColor=white)](https://docs.astral.sh/uv/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes three clinical/administrative PDFs with `RecursiveCharacterTextSplitter`, embeds chunks with `sentence-transformers/all-MiniLM-L6-v2`, persists a FAISS index to disk, and answers questions through a strict, context-only system prompt served by [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/), backed by a local [Unsloth Studio](https://unsloth.ai/) OpenAI-compatible server.
+A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes three clinical/administrative PDFs with `RecursiveCharacterTextSplitter`, embeds chunks with `sentence-transformers/all-MiniLM-L6-v2`, persists a FAISS index to disk, and answers questions through a strict, context-only system prompt served by [FastAPI](https://fastapi.tiangolo.com/) + [Uvicorn](https://www.uvicorn.org/), backed by a local [Unsloth Studio](https://unsloth.ai/) OpenAI-compatible server. Includes automated quality evaluation via [Ragas](https://docs.ragas.io/).
 
 > **Note:** This is a proof-of-concept for local development/testing. It enforces a "use only retrieved context / no hallucinations" policy and returns the exact refusal string when the answer is not grounded in the indexed documents.
 
@@ -30,6 +33,7 @@ A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes t
 - [API Reference](#api-reference)
 - [Querying with Postman](#querying-with-postman)
 - [Testing with Example Prompts](#testing-with-example-prompts)
+- [Automated Evaluation Tests](#automated-evaluation-tests)
 - [Development](#development)
 - [Troubleshooting](#troubleshooting)
 - [License / Disclaimer](#license--disclaimer)
@@ -40,6 +44,7 @@ A local, HIPAA-aware Retrieval-Augmented Generation (RAG) pipeline. It indexes t
 - **Fast, local retrieval**: Uses [FAISS](https://github.com/facebookresearch/faiss) (`faiss-cpu`) for similarity search and saves the index to `./faiss_index/` to avoid re-indexing on startup.
 - **Local-first LLM**: Connects to Unsloth Studio via `langchain-openai` using the OpenAI Chat Completions schema.
 - **HIPAA-aligned guardrails**: A strict system prompt forces answers to use only retrieved context, cite `[Source N]`, reject clinical advice, and return the canonical refusal when insufficient.
+- **Automated evaluation with Ragas**: Built-in test suite and standalone HTML report evaluating faithfulness, answer relevance, context precision, and context recall against ground-truth benchmarks.
 - **Clean, modular design**: Follows SOLID/DRY/KISS principles with a package layout (`app/`) split by config, services, API, and schemas.
 - **First-class API UX**: `GET /health`, `POST /query` (documented), `POST /endpoint` (hidden alias). Pydantic v2 validation with sensible error codes.
 - **Configurable via `.env`**: Model names, timeouts, retrieval count, device, and chunking are all environment-driven.
@@ -99,6 +104,12 @@ graph TD
 │       ├── 09_validation_empty_422.sh
 │       └── 10_validation_get_405.sh
 ├── input-docs/                   # Source PDFs: HIPAA-Clinician-inside.pdf, privacysummary.pdf, pocket-guide.pdf
+├── tests/
+│   ├── conftest.py               # Shared pytest fixtures (LLM, evaluator, Ragas thresholds)
+│   ├── dataset.json              # Ground-truth Q&A/context cases used for evaluation
+│   ├── generate_html_report.py   # Standalone HTML report generator
+│   ├── test_ragas_evaluation.py  # Ragas evaluation test
+│   └── reports/                  # Generated HTML report (gitignored)
 ├── faiss_index/                  # Generated FAISS index (gitignored; rebuilt on demand)
 │   ├── index.faiss
 │   └── index.pkl
@@ -397,6 +408,53 @@ To use them:
 - [ ] Context chunks have `content`, `source` (one of the three PDFs), and `page` (integer or `null`)
 - [ ] Out-of-context questions return the exact refusal string
 - [ ] Clinical/diagnostic advice questions are handled per the guardrails (the system prompt discourages providing individualized advice)
+
+## Automated Evaluation Tests
+
+The `tests/` directory contains an automated [Ragas](https://docs.ragas.io/) evaluation suite that scores the RAG pipeline against a small ground-truth dataset (`tests/dataset.json`, currently 4 HIPAA-focused cases).
+
+### What is evaluated
+
+| Metric | Description | Enforced threshold |
+| --- | --- | --- |
+| Faithfulness | Whether the answer is grounded in the retrieved contexts | `>= 0.85` |
+| Answer Relevance | Whether the answer actually addresses the question | `>= 0.85` |
+| Context Precision | Whether relevant chunks are ranked highly | Not enforced (`0.0`) |
+| Context Recall | Whether retrieval covers the reference answer | Not enforced (`0.0`) |
+
+Thresholds live in the `ragas_config` fixture in `tests/conftest.py`. The HTML report uses `0.85` for all four metrics when rendering PASS/FAIL badges.
+
+### Prerequisites
+
+- Dependencies installed (`uv sync`), including the dev/test group (`pytest`, `ragas`, `datasets`, `pandas`, `jinja2`).
+- Unsloth Studio running with an OpenAI-compatible endpoint on `http://localhost:8888/v1` and the model loaded.
+- Embedding model available (downloaded on first run): `sentence-transformers/all-MiniLM-L6-v2`.
+
+> **Note:** The evaluator endpoint, model, and API key are currently hardcoded in `tests/conftest.py` and `tests/test_ragas_evaluation.py`. Update them if your local setup differs.
+
+### Running the tests
+
+```bash
+# Run the full suite
+uv run pytest tests/ -v
+
+# Run only the Ragas evaluation
+uv run pytest tests/test_ragas_evaluation.py -v
+```
+
+The test prints the average scores to the console and generates a standalone HTML report at:
+
+```text
+tests/reports/ragas_report.html
+```
+
+Open it in any browser (Tailwind is loaded via CDN). The report includes summary cards and a per-case table with the question, generated answer, ground truth, retrieved contexts, and metric scores. `tests/reports/` is gitignored.
+
+### Current behavior and caveats
+
+- The test asserts only **faithfulness** and **answer relevance**; context precision/recall are reported but not gated.
+- Real evaluation is executed directly against the local LLM and evaluator without mock data or fake fallbacks. If evaluation fails (e.g. Unsloth is not running or unreachable), the test raises and fails.
+- The dataset contains reference answers and contexts; it does not exercise the FastAPI HTTP layer. Use the [example prompts](#testing-with-example-prompts) for end-to-end API checks.
 
 ## Development
 
