@@ -89,8 +89,6 @@ graph TD
 │       ├── factories.py          # Embeddings/LLM construction
 │       ├── rag.py                # Orchestration (retrieval + generation)
 │       └── vector_store.py       # FAISS load/create/persist/search
-├── docs/
-│   └── images/                   # Documentation assets (screenshots, diagrams)
 ├── manual-tests/
 │   ├── README.md                 # Usage notes and expected behavior
 │   ├── postman_collection.json   # Ready-to-import Postman collection
