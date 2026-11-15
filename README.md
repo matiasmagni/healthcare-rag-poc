@@ -139,7 +139,7 @@ graph TD
 ### 1) Clone and enter the project
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/matiasmagni/healthcare-rag-poc
 cd healthcare-rag-poc
 ```
 
